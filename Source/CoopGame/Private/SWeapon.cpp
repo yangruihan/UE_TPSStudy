@@ -2,14 +2,11 @@
 
 #include "Public/SWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
-
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ASWeapon::ASWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
     MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
     RootComponent = MeshComp;
 }
@@ -21,10 +18,29 @@ void ASWeapon::BeginPlay()
 	
 }
 
-// Called every frame
-void ASWeapon::Tick(float DeltaTime)
+void ASWeapon::Fire()
 {
-	Super::Tick(DeltaTime);
+    auto Owner = GetOwner();
+    if (Owner)
+    {
+        FVector EyeLocation;
+        FRotator EyeRotation;
+        Owner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
+        FVector TraceEndPos = EyeLocation + (EyeRotation.Vector() * 10000);
+
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(Owner);
+        Params.AddIgnoredActor(this);
+        Params.bTraceComplex = true;
+
+        FHitResult HitResult;
+        if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, ECC_Visibility, Params))
+        {
+            // hit
+
+        }
+
+        DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
+    }
 }
-
