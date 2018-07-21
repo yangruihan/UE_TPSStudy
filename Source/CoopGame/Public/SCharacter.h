@@ -26,6 +26,10 @@ protected:
 
     void MoveRight(float Value);
 
+    void BeginCrouch();
+
+    void EndCrouch();
+
 protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
