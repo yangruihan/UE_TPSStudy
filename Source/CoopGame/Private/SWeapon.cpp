@@ -2,6 +2,8 @@
 
 #include "Public/SWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "DrawDebugHelpers.h"
 
 // Sets default values
@@ -9,6 +11,9 @@ ASWeapon::ASWeapon()
 {
     MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
     RootComponent = MeshComp;
+
+    MuzzleSocketName = "MuzzleSocket";
+    TracerTargetParamName = "Target";
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +32,10 @@ void ASWeapon::Fire()
         FRotator EyeRotation;
         Owner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
-        FVector TraceEndPos = EyeLocation + (EyeRotation.Vector() * 10000);
+        FVector EyeDirection = EyeRotation.Vector();
+
+        FVector TraceEndPos = EyeLocation + EyeDirection * 10000;
+        FVector TracerEffectTargetPos = TraceEndPos;
 
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(Owner);
@@ -37,8 +45,30 @@ void ASWeapon::Fire()
         FHitResult HitResult;
         if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, ECC_Visibility, Params))
         {
-            // hit
+            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), 20.0f, EyeDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
 
+            if (ImpactEffect)
+            {
+                UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation());
+            }
+
+            TracerEffectTargetPos = HitResult.ImpactPoint;
+        }
+
+        if (MuzzleEffect)
+        {
+            UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
+        }
+
+        if (TracerEffect)
+        {
+            FVector TracerLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+
+            auto TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, TracerLocation);
+            if (TracerEffectComp)
+            {
+                TracerEffectComp->SetVectorParameter(TracerTargetParamName, TraceEndPos);
+            }
         }
 
         DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
