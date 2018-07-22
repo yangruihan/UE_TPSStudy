@@ -27,6 +27,16 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Weapon")
 	TSubclassOf<UDamageType> DamageType;
 
+    /* Damage */
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Weapon")
+    float BaseDamage;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Weapon")
+    float CritDamageRate;
+
+    /* Effect */
+
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadonly, Category = "Weapon")
     FName MuzzleSocketName;
 
@@ -52,9 +62,29 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     TSubclassOf<UCameraShake> CameraShake;
 
+protected:
+
+    /* Fire */
+
+	virtual void Fire();
+
+    FTimerHandle TimeHandle_TimeBetweenShots;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+    float RPM; // Revolutions per minute
+
+    float TimeBetweenShots;
+
+    float LastShotTime;
+
 public:	
 
+    virtual void BeginPlay() override;
+
     UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual void Fire();
+    void StartFire();
+
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
+    void StopFire();
 	
 };

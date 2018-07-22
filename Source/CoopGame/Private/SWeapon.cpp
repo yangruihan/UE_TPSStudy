@@ -7,6 +7,8 @@
 #include "DrawDebugHelpers.h"
 #include "CoopGame.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -24,6 +26,16 @@ ASWeapon::ASWeapon()
 
     MuzzleSocketName = "MuzzleSocket";
     TracerTargetParamName = "Target";
+
+    BaseDamage = 20.0f;
+    CritDamageRate = 5.0f;
+
+    RPM = 600;
+}
+
+void ASWeapon::BeginPlay()
+{
+    TimeBetweenShots = 60.0f / RPM;
 }
 
 void ASWeapon::PlayFireEffect(FVector TracerEndPoint)
@@ -76,24 +88,31 @@ void ASWeapon::Fire()
         Params.bReturnPhysicalMaterial = true;
 
         FHitResult HitResult;
-        if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, ECC_Visibility, Params))
+        if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, COLLISION_WEAPON, Params))
         {
-            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), 20.0f, EyeDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
 
             EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
             UParticleSystem* SelectedEffect = nullptr;
 
+            float ActualDamage = BaseDamage;
+
             switch (SurfaceType)
             {
             case SURFACE_FLESH_DEFAULT:
+                SelectedEffect = FleshImpactEffect;
+                break;
+
             case SURFACE_FLESH_VULNERABLE:
                 SelectedEffect = FleshImpactEffect;
+                ActualDamage *= CritDamageRate;
                 break;
 
             default:
                 SelectedEffect = DefaultImpactEffect;
                 break;
             }
+
+            UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), ActualDamage, EyeDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
 
             if (SelectedEffect)
             {
@@ -103,11 +122,24 @@ void ASWeapon::Fire()
             TracerEffectTargetPos = HitResult.ImpactPoint;
         }
 
-        PlayFireEffect(TraceEndPos);
+        PlayFireEffect(TracerEffectTargetPos);
+
+        LastShotTime = GetWorld()->GetTimeSeconds();
 
         if (DebugWeaponDrawing > 0)
         {
             DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
         }
     }
+}
+
+void ASWeapon::StartFire()
+{
+    float DelayTime = FMath::Max(LastShotTime + TimeBetweenShots - GetWorld()->GetTimeSeconds(), 0.0f);
+    GetWorldTimerManager().SetTimer(TimeHandle_TimeBetweenShots, this, &ASWeapon::Fire, TimeBetweenShots, true, DelayTime);
+}
+
+void ASWeapon::StopFire()
+{
+    GetWorldTimerManager().ClearTimer(TimeHandle_TimeBetweenShots);
 }

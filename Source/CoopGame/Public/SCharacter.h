@@ -67,7 +67,10 @@ protected:
 protected:
 
     UFUNCTION(BlueprintCallable, Category = "Player")
-    void Fire();
+    void StartFire();
+
+    UFUNCTION(BlueprintCallable, Category = "Player")
+    void StopFire();
 
 public:	
 	// Called to bind functionality to input
