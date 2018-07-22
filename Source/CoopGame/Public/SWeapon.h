@@ -8,6 +8,7 @@
 
 class USkeletalMeshComponent;
 class UParticleSystem;
+class UCameraShake;
 
 UCLASS()
 class COOPGAME_API ASWeapon : public AActor
@@ -42,6 +43,11 @@ protected:
     UParticleSystem* TracerEffect;
 
     void PlayFireEffect(FVector TracerEndPoint);
+
+protected:
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+    TSubclassOf<UCameraShake> CameraShake;
 
 public:	
 
