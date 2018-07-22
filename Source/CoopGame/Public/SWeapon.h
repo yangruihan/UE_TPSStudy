@@ -40,9 +40,8 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Weapon")
     UParticleSystem* TracerEffect;
-    
-    // Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
+    void PlayFireEffect(FVector TracerEndPoint);
 
 public:	
 

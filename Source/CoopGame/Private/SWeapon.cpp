@@ -24,11 +24,23 @@ ASWeapon::ASWeapon()
     TracerTargetParamName = "Target";
 }
 
-// Called when the game starts or when spawned
-void ASWeapon::BeginPlay()
+void ASWeapon::PlayFireEffect(FVector TracerEndPoint)
 {
-	Super::BeginPlay();
-	
+    if (MuzzleEffect)
+    {
+        UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
+    }
+
+    if (TracerEffect)
+    {
+        FVector TracerLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+
+        auto TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, TracerLocation);
+        if (TracerEffectComp)
+        {
+            TracerEffectComp->SetVectorParameter(TracerTargetParamName, TracerEndPoint);
+        }
+    }
 }
 
 void ASWeapon::Fire()
@@ -63,21 +75,7 @@ void ASWeapon::Fire()
             TracerEffectTargetPos = HitResult.ImpactPoint;
         }
 
-        if (MuzzleEffect)
-        {
-            UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
-        }
-
-        if (TracerEffect)
-        {
-            FVector TracerLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
-
-            auto TracerEffectComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, TracerLocation);
-            if (TracerEffectComp)
-            {
-                TracerEffectComp->SetVectorParameter(TracerTargetParamName, TraceEndPos);
-            }
-        }
+        PlayFireEffect(TraceEndPos);
 
         if (DebugWeaponDrawing > 0)
         {
