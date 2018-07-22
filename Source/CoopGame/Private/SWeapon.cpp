@@ -6,6 +6,14 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "DrawDebugHelpers.h"
 
+static int32 DebugWeaponDrawing = 0;
+FAutoConsoleVariableRef CVARDebugWeaponDrawing (
+    TEXT("COOP.DebugWeapons"),
+    DebugWeaponDrawing,
+    TEXT("Draw Debug Lines for weapons"),
+    ECVF_Cheat
+);
+
 // Sets default values
 ASWeapon::ASWeapon()
 {
@@ -71,6 +79,9 @@ void ASWeapon::Fire()
             }
         }
 
-        DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
+        if (DebugWeaponDrawing > 0)
+        {
+            DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
+        }
     }
 }
