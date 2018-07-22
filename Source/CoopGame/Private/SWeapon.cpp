@@ -35,6 +35,8 @@ ASWeapon::ASWeapon()
 
 void ASWeapon::BeginPlay()
 {
+    Super::BeginPlay();
+
     TimeBetweenShots = 60.0f / RPM;
 }
 
