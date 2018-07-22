@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "DrawDebugHelpers.h"
+#include "CoopGame.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -71,15 +73,31 @@ void ASWeapon::Fire()
         Params.AddIgnoredActor(Owner);
         Params.AddIgnoredActor(this);
         Params.bTraceComplex = true;
+        Params.bReturnPhysicalMaterial = true;
 
         FHitResult HitResult;
         if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, ECC_Visibility, Params))
         {
             UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), 20.0f, EyeDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
 
-            if (ImpactEffect)
+            EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+            UParticleSystem* SelectedEffect = nullptr;
+
+            switch (SurfaceType)
             {
-                UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation());
+            case SURFACE_FLESH_DEFAULT:
+            case SURFACE_FLESH_VULNERABLE:
+                SelectedEffect = FleshImpactEffect;
+                break;
+
+            default:
+                SelectedEffect = DefaultImpactEffect;
+                break;
+            }
+
+            if (SelectedEffect)
+            {
+                UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation());
             }
 
             TracerEffectTargetPos = HitResult.ImpactPoint;
