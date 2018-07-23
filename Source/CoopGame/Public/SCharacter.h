@@ -33,6 +33,19 @@ protected:
 
 protected:
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Player")
+    float RunSpeed;
+
+    float DefaultSpeed;
+    
+    void BeginRun();
+
+    void EndRun();
+
+    UCharacterMovementComponent* MoveComp;
+
+protected:
+
     UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
     UCameraComponent* CameraComp;
 

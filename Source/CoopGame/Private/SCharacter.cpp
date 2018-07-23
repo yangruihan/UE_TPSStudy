@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "Public/SWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -27,6 +28,8 @@ ASCharacter::ASCharacter()
     ZoomSpeed = 20.0f;
     ZoomedFov = 60.0f;
 
+    RunSpeed = 1500.0f;
+
     WeaponSocketName = "WeaponSocket";
 }
 
@@ -36,6 +39,9 @@ void ASCharacter::BeginPlay()
 	Super::BeginPlay();
 
     DefaultFOV = CameraComp->FieldOfView;
+
+    MoveComp = Cast<UCharacterMovementComponent>(GetMovementComponent());
+    DefaultSpeed = MoveComp->MaxWalkSpeed;
 
     // Set default weapon
     if (DefaultWeaponClass)
@@ -60,6 +66,16 @@ void ASCharacter::MoveForward(float Value)
 void ASCharacter::MoveRight(float Value)
 {
     AddMovementInput(GetActorRightVector() * Value);
+}
+
+void ASCharacter::BeginRun()
+{
+    MoveComp->MaxWalkSpeed = RunSpeed;
+}
+
+void ASCharacter::EndRun()
+{
+    MoveComp->MaxWalkSpeed = DefaultSpeed;
 }
 
 void ASCharacter::BeginCrouch()
@@ -119,6 +135,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
     PlayerInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
+
+    PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ASCharacter::BeginRun);
+    PlayerInputComponent->BindAction("Run", IE_Released, this, &ASCharacter::EndRun);
 }
 
 FVector ASCharacter::GetPawnViewLocation() const
