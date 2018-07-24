@@ -9,6 +9,8 @@
 #include "Public/SWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "CoopGame.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -23,6 +25,8 @@ ASCharacter::ASCharacter()
 
     CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
     CameraComp->SetupAttachment(SpringArmComp);
+
+    GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 
     bWantsToZoom = false;
     ZoomSpeed = 20.0f;
