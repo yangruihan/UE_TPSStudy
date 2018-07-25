@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CoopGame.h"
 #include "Components/CapsuleComponent.h"
+#include "Public/SHealthComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -28,6 +29,8 @@ ASCharacter::ASCharacter()
 
     GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 
+    HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+
     bWantsToZoom = false;
     ZoomSpeed = 20.0f;
     ZoomedFov = 60.0f;
@@ -35,6 +38,8 @@ ASCharacter::ASCharacter()
     RunSpeed = 1500.0f;
 
     WeaponSocketName = "WeaponSocket";
+
+    bDied = false;
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +65,8 @@ void ASCharacter::BeginPlay()
             CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
         }
     }
+
+    HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 }
 
 void ASCharacter::MoveForward(float Value)
@@ -115,6 +122,22 @@ void ASCharacter::StopFire()
     if (CurrentWeapon)
     {
         CurrentWeapon->StopFire();
+    }
+}
+
+void ASCharacter::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
+    const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+    if (Health <= 0 && !bDied)
+    {
+        bDied = true;
+
+        GetMovementComponent()->StopMovementImmediately();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        DetachFromControllerPendingDestroy();
+
+        SetLifeSpan(10.0f);
     }
 }
 

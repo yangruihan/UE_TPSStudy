@@ -9,6 +9,7 @@
 class UCameraComponent;
 class USpringArmComponent;
 class ASWeapon;
+class USHealthComponent;
 
 UCLASS()
 class COOPGAME_API ASCharacter : public ACharacter
@@ -84,6 +85,18 @@ protected:
 
     UFUNCTION(BlueprintCallable, Category = "Player")
     void StopFire();
+
+protected:
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
+    USHealthComponent* HealthComp;
+
+    UFUNCTION()
+    void OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta, 
+                         const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadonly, Category = "Player")
+    bool bDied;
 
 public:	
 	// Called to bind functionality to input

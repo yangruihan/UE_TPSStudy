@@ -6,11 +6,7 @@
 // Sets default values for this component's properties
 USHealthComponent::USHealthComponent()
 {
-    auto Owner = GetOwner();
-    if (Owner)
-    {
-        Owner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::OnTakeAnyDamageHandler);
-    }
+    DefaultHealth = 100;
 }
 
 
@@ -20,6 +16,12 @@ void USHealthComponent::BeginPlay()
 	Super::BeginPlay();
 
     Health = DefaultHealth;
+
+    auto Owner = GetOwner();
+    if (Owner)
+    {
+        Owner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::OnTakeAnyDamageHandler);
+    }
 }
 
 void USHealthComponent::OnTakeAnyDamageHandler(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
