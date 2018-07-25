@@ -40,6 +40,7 @@ ASCharacter::ASCharacter()
     WeaponSocketName = "WeaponSocket";
 
     bDied = false;
+    bSprint = false;
 }
 
 // Called when the game starts or when spawned
@@ -76,21 +77,32 @@ void ASCharacter::MoveForward(float Value)
 
 void ASCharacter::MoveRight(float Value)
 {
+    if (Value != 0)
+    {
+        EndSprint();
+    }
+
     AddMovementInput(GetActorRightVector() * Value);
 }
 
-void ASCharacter::BeginRun()
+void ASCharacter::BeginSprint()
 {
     MoveComp->MaxWalkSpeed = RunSpeed;
+    bSprint = true;
 }
 
-void ASCharacter::EndRun()
+void ASCharacter::EndSprint()
 {
+    if (!bSprint)
+        return;
+
     MoveComp->MaxWalkSpeed = DefaultSpeed;
+    bSprint = false;
 }
 
 void ASCharacter::BeginCrouch()
 {
+    EndSprint();
     Crouch();
 }
 
@@ -101,6 +113,7 @@ void ASCharacter::EndCrouch()
 
 void ASCharacter::BeginZoom()
 {
+    EndSprint();
     bWantsToZoom = true;
 }
 
@@ -111,6 +124,8 @@ void ASCharacter::EndZoom()
 
 void ASCharacter::StartFire()
 {
+    EndSprint();
+
     if (CurrentWeapon)
     {
         CurrentWeapon->StartFire();
@@ -163,8 +178,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
     PlayerInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
 
-    PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ASCharacter::BeginRun);
-    PlayerInputComponent->BindAction("Run", IE_Released, this, &ASCharacter::EndRun);
+    PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ASCharacter::BeginSprint);
+    PlayerInputComponent->BindAction("Run", IE_Released, this, &ASCharacter::EndSprint);
 }
 
 FVector ASCharacter::GetPawnViewLocation() const

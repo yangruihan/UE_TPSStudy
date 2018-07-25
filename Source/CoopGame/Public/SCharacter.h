@@ -37,11 +37,14 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Player")
     float RunSpeed;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Player")
+    bool bSprint;
+
     float DefaultSpeed;
     
-    void BeginRun();
+    void BeginSprint();
 
-    void EndRun();
+    void EndSprint();
 
     UCharacterMovementComponent* MoveComp;
 
