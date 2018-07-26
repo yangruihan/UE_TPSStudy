@@ -31,6 +31,8 @@ ASWeapon::ASWeapon()
     CritDamageRate = 5.0f;
 
     RPM = 600;
+
+    SetReplicates(true);
 }
 
 void ASWeapon::BeginPlay()

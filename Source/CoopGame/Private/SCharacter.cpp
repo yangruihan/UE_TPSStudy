@@ -12,6 +12,7 @@
 #include "CoopGame.h"
 #include "Components/CapsuleComponent.h"
 #include "Public/SHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -53,21 +54,24 @@ void ASCharacter::BeginPlay()
     MoveComp = Cast<UCharacterMovementComponent>(GetMovementComponent());
     DefaultSpeed = MoveComp->MaxWalkSpeed;
 
-    // Set default weapon
-    if (DefaultWeaponClass)
-    {
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        CurrentWeapon = GetWorld()->SpawnActor<ASWeapon>(DefaultWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 
-        if (CurrentWeapon)
+    if (Role == ROLE_Authority)
+    {
+        // Set default weapon
+        if (DefaultWeaponClass)
         {
-            CurrentWeapon->SetOwner(this);
-            CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            CurrentWeapon = GetWorld()->SpawnActor<ASWeapon>(DefaultWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+
+            if (CurrentWeapon)
+            {
+                CurrentWeapon->SetOwner(this);
+                CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+            }
         }
     }
-
-    HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 }
 
 void ASCharacter::MoveForward(float Value)
@@ -202,3 +206,9 @@ void ASCharacter::Tick(float DeltaSeconds)
     CameraComp->SetFieldOfView(NewFOV);
 }
 
+void ASCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASCharacter, CurrentWeapon);
+}

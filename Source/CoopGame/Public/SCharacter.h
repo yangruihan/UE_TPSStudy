@@ -73,6 +73,7 @@ protected:
 
 protected:
 
+    UPROPERTY(Replicated)
     ASWeapon* CurrentWeapon;
 
     UPROPERTY(EditDefaultsOnly, Category = "Player")
