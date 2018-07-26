@@ -73,6 +73,11 @@ void ASWeapon::PlayFireEffect(FVector TracerEndPoint)
 
 void ASWeapon::Fire()
 {
+    if (Role < ROLE_Authority)
+    {
+        ServerFire();
+    }
+
     auto Owner = GetOwner();
     if (Owner)
     {
@@ -135,6 +140,16 @@ void ASWeapon::Fire()
             DrawDebugLine(GetWorld(), EyeLocation, TraceEndPos, FColor::White, false, 0.5, 0, 1);
         }
     }
+}
+
+void ASWeapon::ServerFire_Implementation()
+{
+    Fire();
+}
+
+bool ASWeapon::ServerFire_Validate()
+{
+    return true;
 }
 
 void ASWeapon::StartFire()

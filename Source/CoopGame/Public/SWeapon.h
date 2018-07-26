@@ -68,6 +68,9 @@ protected:
 
 	virtual void Fire();
 
+    UFUNCTION(Server, Reliable, WithValidation)
+    void ServerFire();
+
     FTimerHandle TimeHandle_TimeBetweenShots;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon")
