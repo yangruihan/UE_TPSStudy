@@ -99,7 +99,7 @@ protected:
     void OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta, 
                          const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-    UPROPERTY(VisibleDefaultsOnly, BlueprintReadonly, Category = "Player")
+    UPROPERTY(Replicated, VisibleDefaultsOnly, BlueprintReadonly, Category = "Player")
     bool bDied;
 
 public:	
