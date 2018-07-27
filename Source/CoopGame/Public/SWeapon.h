@@ -18,7 +18,10 @@ struct FHitScanTrace
 public:
 
     UPROPERTY()
-    FVector_NetQuantize TraceFrom;
+    float Time;
+
+    UPROPERTY()
+    TEnumAsByte<EPhysicalSurface> HitSurface;
 
     UPROPERTY()
     FVector_NetQuantize TraceTo;
@@ -70,6 +73,8 @@ protected:
     UParticleSystem* TracerEffect;
 
     void PlayFireEffect(FVector TracerEndPoint);
+
+    void PlayImpactEffect(EPhysicalSurface SurfaceType, FVector ImpactPos);
 
     UPROPERTY(ReplicatedUsing=OnRep_HitScanTrace)
     FHitScanTrace HitScanTrace;

@@ -34,6 +34,9 @@ ASWeapon::ASWeapon()
     RPM = 600;
 
     SetReplicates(true);
+
+    NetUpdateFrequency = 66.0f;
+    MinNetUpdateFrequency = 33.0f;
 }
 
 void ASWeapon::BeginPlay()
@@ -72,6 +75,32 @@ void ASWeapon::PlayFireEffect(FVector TracerEndPoint)
     }
 }
 
+void ASWeapon::PlayImpactEffect(EPhysicalSurface SurfaceType, FVector ImpactPos)
+{
+    UParticleSystem* SelectedEffect = nullptr;
+    switch (SurfaceType)
+    {
+    case SURFACE_FLESH_DEFAULT:
+        SelectedEffect = FleshImpactEffect;
+        break;
+    
+    case SURFACE_FLESH_VULNERABLE:
+        SelectedEffect = FleshImpactEffect;
+        break;
+
+    default:
+        SelectedEffect = DefaultImpactEffect;
+        break;
+    }
+
+    if (SelectedEffect)
+    {
+        auto Direction = ImpactPos - MeshComp->GetSocketLocation(MuzzleSocketName);
+        Direction.Normalize();
+        UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, ImpactPos, Direction.Rotation());
+    }
+}
+
 void ASWeapon::Fire()
 {
     if (Role < ROLE_Authority)
@@ -98,38 +127,33 @@ void ASWeapon::Fire()
         Params.bReturnPhysicalMaterial = true;
 
         FHitResult HitResult;
+        EPhysicalSurface SurfaceType = EPhysicalSurface::SurfaceType_Default;
+        
         if (GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEndPos, COLLISION_WEAPON, Params))
         {
 
-            EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
-            UParticleSystem* SelectedEffect = nullptr;
+            SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
 
             float ActualDamage = BaseDamage;
 
             switch (SurfaceType)
             {
             case SURFACE_FLESH_DEFAULT:
-                SelectedEffect = FleshImpactEffect;
                 break;
 
             case SURFACE_FLESH_VULNERABLE:
-                SelectedEffect = FleshImpactEffect;
                 ActualDamage *= CritDamageRate;
                 break;
 
             default:
-                SelectedEffect = DefaultImpactEffect;
                 break;
             }
 
             UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), ActualDamage, EyeDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
 
-            if (SelectedEffect)
-            {
-                UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation());
-            }
-
             TracerEffectTargetPos = HitResult.ImpactPoint;
+
+            PlayImpactEffect(SurfaceType, HitResult.ImpactPoint);
         }
 
         PlayFireEffect(TracerEffectTargetPos);
@@ -137,6 +161,8 @@ void ASWeapon::Fire()
         if (Role == ROLE_Authority)
         {
             HitScanTrace.TraceTo = TracerEffectTargetPos;
+            HitScanTrace.HitSurface = SurfaceType;
+            HitScanTrace.Time = GetWorld()->GetTimeSeconds();
         }
 
         LastShotTime = GetWorld()->GetTimeSeconds();
@@ -151,6 +177,7 @@ void ASWeapon::Fire()
 void ASWeapon::OnRep_HitScanTrace()
 {
     PlayFireEffect(HitScanTrace.TraceTo);
+    PlayImpactEffect(HitScanTrace.HitSurface, HitScanTrace.TraceTo);
 }
 
 
