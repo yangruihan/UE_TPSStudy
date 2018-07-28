@@ -37,8 +37,11 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Player")
     float RunSpeed;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Player")
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadonly, Category = "Player")
     bool bSprint;
+
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadonly, Category = "Player")
+    FRotator CtrlRotation;
 
     float DefaultSpeed;
     

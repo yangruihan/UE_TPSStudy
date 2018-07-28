@@ -204,6 +204,9 @@ void ASCharacter::Tick(float DeltaSeconds)
     float NewFOV = FMath::FInterpTo(CameraComp->FieldOfView, TargetFOV, DeltaSeconds, ZoomSpeed);
 
     CameraComp->SetFieldOfView(NewFOV);
+
+    if (Role == ROLE_Authority)
+        CtrlRotation = GetControlRotation();
 }
 
 void ASCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -212,4 +215,6 @@ void ASCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLi
 
 	DOREPLIFETIME(ASCharacter, CurrentWeapon);
 	DOREPLIFETIME(ASCharacter, bDied);
+	DOREPLIFETIME(ASCharacter, bSprint);
+	DOREPLIFETIME(ASCharacter, CtrlRotation);
 }
