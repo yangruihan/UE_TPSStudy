@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "AI/Navigation/NavigationSystem.h"
 #include "AI/Navigation/NavigationPath.h"
-
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -16,7 +16,12 @@ ATrackerBot::ATrackerBot()
 
     MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
     MeshComp->SetCanEverAffectNavigation(false);
+    MeshComp->SetSimulatePhysics(true);
     RootComponent = MeshComp;
+    
+    bUseVelocityChagne = true;
+    ReachRequiredDistance = 100.0f;
+    MovementForce = 1000.0f;
 }
 
 // Called when the game starts or when spawned
@@ -24,6 +29,7 @@ void ATrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    NextPathPoint = GetNextPathPoint();
 }
 
 FVector ATrackerBot::GetNextPathPoint()
@@ -46,4 +52,19 @@ void ATrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    auto Vector = NextPathPoint - GetActorLocation();
+    auto Distance = Vector.Size();
+    if (Distance <= ReachRequiredDistance)
+    {
+        NextPathPoint = GetNextPathPoint();
+    }
+    else
+    {
+        auto ForceDirection = Vector;
+        ForceDirection.Normalize();
+        ForceDirection *= MovementForce;
+        MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChagne);
+    }
+    
+    DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
 }
