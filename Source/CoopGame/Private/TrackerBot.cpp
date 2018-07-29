@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Public/SHealthComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -27,6 +28,10 @@ ATrackerBot::ATrackerBot()
     bUseVelocityChagne = true;
     ReachRequiredDistance = 100.0f;
     MovementForce = 1000.0f;
+
+    bExplosion = false;
+    ExplosionDamage = 40.0f;
+    ExplosionRange = 200.0f;
 }
 
 // Called when the game starts or when spawned
@@ -76,6 +81,28 @@ void ATrackerBot::Tick(float DeltaTime)
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
 }
 
+void ATrackerBot::SelfDestruct()
+{
+    if (bExplosion)
+        return;
+
+    bExplosion = true;
+
+    if (ExplosionEffect)
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
+    }
+
+    TArray<AActor*> IgnoreActor;
+    IgnoreActor.Add(this);
+
+    UGameplayStatics::ApplyRadialDamage(GetWorld(), ExplosionDamage, GetActorLocation(), ExplosionRange, nullptr, IgnoreActor, this, GetInstigatorController(), true);
+
+    DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRange, 12, FColor::Red, false, 2);
+
+    Destroy();
+}
+
 void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
                                   const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
@@ -90,4 +117,9 @@ void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, fl
     }
     
     UE_LOG(LogTemp, Log, TEXT("Health Changed: %s (%s)"), *FString::SanitizeFloat(Health), *GetName());
+
+    if (Health <= 0.0f)
+    {
+        SelfDestruct();
+    }
 }

@@ -9,6 +9,7 @@
 class UStaticMeshComponent;
 class USHealthComponent;
 class UMaterialInstanceDynamic;
+class UParticleSystem;
 
 UCLASS()
 class COOPGAME_API ATrackerBot : public APawn
@@ -43,6 +44,20 @@ protected:
     float MovementForce;
     
     UMaterialInstanceDynamic* MatInstance;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    UParticleSystem* ExplosionEffect;
+
+    void SelfDestruct();
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float ExplosionDamage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float ExplosionRange;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    bool bExplosion;
     
     UFUNCTION()
     void OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
