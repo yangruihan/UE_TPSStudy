@@ -7,6 +7,7 @@
 #include "AI/Navigation/NavigationSystem.h"
 #include "AI/Navigation/NavigationPath.h"
 #include "DrawDebugHelpers.h"
+#include "Public/SHealthComponent.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -19,6 +20,9 @@ ATrackerBot::ATrackerBot()
     MeshComp->SetSimulatePhysics(true);
     RootComponent = MeshComp;
     
+    HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+    HealthComp->DefaultHealth = 100.0f;
+    
     bUseVelocityChagne = true;
     ReachRequiredDistance = 100.0f;
     MovementForce = 1000.0f;
@@ -29,6 +33,8 @@ void ATrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    HealthComp->OnHealthChanged.AddDynamic(this, &ATrackerBot::OnHealthChanged);
+    
     NextPathPoint = GetNextPathPoint();
 }
 
@@ -67,4 +73,10 @@ void ATrackerBot::Tick(float DeltaTime)
     }
     
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
+}
+
+void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
+                                  const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+{
+    UE_LOG(LogTemp, Log, TEXT("Health Changed: %s (%s)"), *FString::SanitizeFloat(Health), *GetName());
 }
