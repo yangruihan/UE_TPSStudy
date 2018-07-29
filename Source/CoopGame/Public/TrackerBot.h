@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class USHealthComponent;
+class UMaterialInstanceDynamic;
 
 UCLASS()
 class COOPGAME_API ATrackerBot : public APawn
@@ -40,6 +41,8 @@ protected:
     
     UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
     float MovementForce;
+    
+    UMaterialInstanceDynamic* MatInstance;
     
     UFUNCTION()
     void OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,

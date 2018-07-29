@@ -8,6 +8,7 @@
 #include "AI/Navigation/NavigationPath.h"
 #include "DrawDebugHelpers.h"
 #include "Public/SHealthComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -78,5 +79,15 @@ void ATrackerBot::Tick(float DeltaTime)
 void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
                                   const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
+    if (!MatInstance)
+    {
+        MatInstance = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+    }
+    
+    if (MatInstance)
+    {
+        MatInstance->SetScalarParameterValue("LastTimeTakeDamaged", GetWorld()->TimeSeconds);
+    }
+    
     UE_LOG(LogTemp, Log, TEXT("Health Changed: %s (%s)"), *FString::SanitizeFloat(Health), *GetName());
 }
