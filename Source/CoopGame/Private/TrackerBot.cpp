@@ -2,6 +2,11 @@
 
 #include "TrackerBot.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+#include "AI/Navigation/NavigationSystem.h"
+#include "AI/Navigation/NavigationPath.h"
+
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -19,6 +24,21 @@ void ATrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+FVector ATrackerBot::GetNextPathPoint()
+{
+    auto PlayerPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
+    if (PlayerPawn)
+    {
+        auto NavPath = UNavigationSystem::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
+        if (NavPath && NavPath->PathPoints.Num() > 1)
+        {
+            return NavPath->PathPoints[1];
+        }
+    }
+    
+    return GetActorLocation();
 }
 
 // Called every frame
