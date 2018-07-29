@@ -8,6 +8,9 @@
 
 class UStaticMeshComponent;
 class USHealthComponent;
+class URadialForceComponent;
+class UMaterialInterface;
+class UParticleSystem;
 
 UCLASS()
 class COOPGAME_API ASExplosiveBarrel : public AActor
@@ -25,6 +28,21 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
     USHealthComponent* HealthComp;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
+    URadialForceComponent* RadialForceComp;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "ExplosiveBarrel")
+    UMaterialInterface* ExplosedMat;    
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "ExplosiveBarrel")
+    UParticleSystem* ExplosedEffect;
+
+    UPROPERTY(ReplicatedUsing = OnRep_Died, VisibleAnywhere, BlueprintReadonly, Category = "ExplosiveBarrel")
+    bool bDied;
+
+    UFUNCTION()
+    void OnRep_Died();
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
