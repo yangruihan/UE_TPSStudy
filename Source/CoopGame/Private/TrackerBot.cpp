@@ -10,6 +10,9 @@
 #include "Public/SHealthComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "DrawDebugHelpers.h"
+#include "Components/SphereComponent.h"
+#include "Public/SCharacter.h"
+#include "TimerManager.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -24,6 +27,13 @@ ATrackerBot::ATrackerBot()
     
     HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
     HealthComp->DefaultHealth = 100.0f;
+
+    SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+    SphereComp->SetSphereRadius(180.0f);
+    SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+    SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    SphereComp->SetupAttachment(RootComponent);
     
     bUseVelocityChagne = true;
     ReachRequiredDistance = 100.0f;
@@ -32,6 +42,8 @@ ATrackerBot::ATrackerBot()
     bExplosion = false;
     ExplosionDamage = 40.0f;
     ExplosionRange = 200.0f;
+
+    bStartSelfDamage = false;
 }
 
 // Called when the game starts or when spawned
@@ -81,6 +93,18 @@ void ATrackerBot::Tick(float DeltaTime)
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
 }
 
+void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+    if (!bStartSelfDamage)
+    {
+        auto PlayerPawn = Cast<ASCharacter>(OtherActor);
+        if (PlayerPawn)
+        {
+            GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, 0.5f, true, 0);
+        }
+    }
+}
+
 void ATrackerBot::SelfDestruct()
 {
     if (bExplosion)
@@ -101,6 +125,11 @@ void ATrackerBot::SelfDestruct()
     DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRange, 12, FColor::Red, false, 2);
 
     Destroy();
+}
+
+void ATrackerBot::SelfDamage()
+{
+    UGameplayStatics::ApplyDamage(this, 20.0f, GetInstigatorController(), this, nullptr);
 }
 
 void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
