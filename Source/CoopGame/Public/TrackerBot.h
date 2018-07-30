@@ -12,6 +12,7 @@ class UMaterialInstanceDynamic;
 class UParticleSystem;
 class USphereComponent;
 class USoundCue;
+class UAudioComponent;
 
 UCLASS()
 class COOPGAME_API ATrackerBot : public APawn
@@ -34,6 +35,9 @@ protected:
 
     UPROPERTY(VisibleDefaultsOnly, Category = "Components")
     USphereComponent* SphereComp;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+    UAudioComponent* AudioComp;
     
     FVector GetNextPathPoint();
     

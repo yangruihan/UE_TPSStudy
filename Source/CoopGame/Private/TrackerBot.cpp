@@ -15,6 +15,8 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -36,6 +38,8 @@ ATrackerBot::ATrackerBot()
     SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
     SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
     SphereComp->SetupAttachment(RootComponent);
+
+    AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
     
     bUseVelocityChagne = true;
     ReachRequiredDistance = 100.0f;
@@ -95,13 +99,19 @@ void ATrackerBot::Tick(float DeltaTime)
     }
     
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
+
+    const auto Vel = GetVelocity().Size();
+    const auto FinalSoundValue = UKismetMathLibrary::MapRangeClamped(Vel, 10, 1000, 0.1, 2);
+    AudioComp->SetVolumeMultiplier(FinalSoundValue);
 }
 
 void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 {
     if (!bStartSelfDamage && !bExplosion)
     {
-        auto PlayerPawn = Cast<ASCharacter>(OtherActor);
+        bStartSelfDamage = true;
+
+        const auto PlayerPawn = Cast<ASCharacter>(OtherActor);
         if (PlayerPawn)
         {
             GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, SelfDamageInterval, true, 0);
