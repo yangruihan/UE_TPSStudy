@@ -13,6 +13,8 @@
 #include "Components/SphereComponent.h"
 #include "Public/SCharacter.h"
 #include "TimerManager.h"
+#include "Engine/World.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
@@ -44,6 +46,8 @@ ATrackerBot::ATrackerBot()
     ExplosionRange = 200.0f;
 
     bStartSelfDamage = false;
+
+    SelfDamageInterval = 0.5f;
 }
 
 // Called when the game starts or when spawned
@@ -95,12 +99,17 @@ void ATrackerBot::Tick(float DeltaTime)
 
 void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-    if (!bStartSelfDamage)
+    if (!bStartSelfDamage && !bExplosion)
     {
         auto PlayerPawn = Cast<ASCharacter>(OtherActor);
         if (PlayerPawn)
         {
-            GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, 0.5f, true, 0);
+            GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, SelfDamageInterval, true, 0);
+
+            if (SelfDestructSoundEffect)
+            {
+                UGameplayStatics::SpawnSoundAttached(SelfDestructSoundEffect, RootComponent);
+            }
         }
     }
 }
@@ -121,6 +130,11 @@ void ATrackerBot::SelfDestruct()
     IgnoreActor.Add(this);
 
     UGameplayStatics::ApplyRadialDamage(GetWorld(), ExplosionDamage, GetActorLocation(), ExplosionRange, nullptr, IgnoreActor, this, GetInstigatorController(), true);
+
+    if (ExplosionSoundEffect)
+    {
+        UGameplayStatics::SpawnSoundAtLocation(GetWorld(), ExplosionSoundEffect, GetActorLocation());
+    }
 
     DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRange, 12, FColor::Red, false, 2);
 

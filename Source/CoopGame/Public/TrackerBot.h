@@ -11,6 +11,7 @@ class USHealthComponent;
 class UMaterialInstanceDynamic;
 class UParticleSystem;
 class USphereComponent;
+class USoundCue;
 
 UCLASS()
 class COOPGAME_API ATrackerBot : public APawn
@@ -66,6 +67,15 @@ protected:
     FTimerHandle TimerHandle_SelfDamage;
 
     bool bStartSelfDamage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    USoundCue* SelfDestructSoundEffect;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    USoundCue* ExplosionSoundEffect;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float SelfDamageInterval;
 
     UFUNCTION()
     void SelfDamage();
