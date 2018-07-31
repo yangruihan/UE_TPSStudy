@@ -82,6 +82,8 @@ void ATrackerBot::BeginPlay()
     ExplosionDamage = DefaultExplosionDamage;
 
     HealthComp->OnHealthChanged.AddDynamic(this, &ATrackerBot::OnHealthChanged);
+    
+    SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ATrackerBot::OnMeshCompBeginOverlap);
 }
 
 FVector ATrackerBot::GetNextPathPoint()
@@ -173,21 +175,24 @@ void ATrackerBot::Tick(float DeltaTime)
     AudioComp->SetVolumeMultiplier(FinalSoundValue);
 }
 
-void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+void ATrackerBot::OnMeshCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-    DrawDebugString(GetWorld(), GetActorLocation(), FString("NotifyActorBeginOverlap"), 0, FColor::Red, 2);
-
     if (!bStartSelfDamage && !bExplosion)
     {
         bStartSelfDamage = true;
-
+        
         const auto PlayerPawn = Cast<ASCharacter>(OtherActor);
         if (PlayerPawn)
         {
-            DrawDebugString(GetWorld(), GetActorLocation(), FString("overlap PlayerPawn"), 0, FColor::Red, 2);
-
-            GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, SelfDamageInterval, true, 0);
-
+            DrawDebugString(GetWorld(), GetActorLocation(), FString("Overlap PlayerPawn"), 0, FColor::Red, 2);
+            UE_LOG(LogTemp, Log, TEXT("Overlap PlayerPawn (%s, %s)"), *GetName(), *PlayerPawn->GetName());
+            
+            if (Role == ROLE_Authority)
+            {
+                GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, SelfDamageInterval, true, 0);
+            }
+            
             if (SelfDestructSoundEffect)
             {
                 UGameplayStatics::SpawnSoundAttached(SelfDestructSoundEffect, RootComponent);
@@ -227,6 +232,8 @@ void ATrackerBot::SelfDestruct()
     }
 
     DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRange, 12, FColor::Red, false, 2);
+    
+    UE_LOG(LogTemp, Log, TEXT("SelfDestruct (%s)"), *GetName());
 }
 
 void ATrackerBot::SelfDamage()
