@@ -30,6 +30,7 @@ ATrackerBot::ATrackerBot()
     MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
     MeshComp->SetCanEverAffectNavigation(false);
     MeshComp->SetSimulatePhysics(true);
+    MeshComp->bGenerateOverlapEvents = true;
     RootComponent = MeshComp;
     
     HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
@@ -48,7 +49,7 @@ ATrackerBot::ATrackerBot()
     TeammateOverlapSphereComp->SetSphereRadius(300.0f);
     TeammateOverlapSphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     TeammateOverlapSphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-    TeammateOverlapSphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    TeammateOverlapSphereComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
     TeammateOverlapSphereComp->SetupAttachment(RootComponent);
     
     bUseVelocityChagne = true;
@@ -151,18 +152,18 @@ void ATrackerBot::Tick(float DeltaTime)
             MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChagne);
         }
 
-         TArray<UPrimitiveComponent*> OverlappingComps;
-         TeammateOverlapSphereComp->GetOverlappingComponents(OverlappingComps);
-         auto nearByTeammateCount = 0;
-         for (auto i = 0; i < OverlappingComps.Num(); i++)
-         {
-             auto PrimCop = OverlappingComps[i];
-        
-             if (PrimCop && PrimCop->GetOwner() != this
-                 && PrimCop->GetOwner()->ActorHasTag(FName("TrackerBot")))
-             {
-                 nearByTeammateCount++;
-             }
+        TArray<UPrimitiveComponent*> OverlappingComps;
+        TeammateOverlapSphereComp->GetOverlappingComponents(OverlappingComps);
+        auto nearByTeammateCount = 0;
+        for (auto i = 0; i < OverlappingComps.Num(); i++)
+        {
+            auto PrimCop = OverlappingComps[i];
+            
+            if (PrimCop && PrimCop->GetOwner() != this
+                && PrimCop->GetOwner()->ActorHasTag(FName("TrackerBot")))
+            {
+                nearByTeammateCount++;
+            }
          }
         
          ChangeCurrentPower(nearByTeammateCount);
@@ -233,7 +234,7 @@ void ATrackerBot::SelfDestruct()
 
     DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRange, 12, FColor::Red, false, 2);
     
-    UE_LOG(LogTemp, Log, TEXT("SelfDestruct (%s)"), *GetName());
+    UE_LOG(LogTemp, Log, TEXT("SelfDestruct (%s) radius %s damage %s"), *GetName(), *FString::SanitizeFloat(ExplosionRange), *FString::SanitizeFloat(ExplosionDamage));
 }
 
 void ATrackerBot::SelfDamage()
