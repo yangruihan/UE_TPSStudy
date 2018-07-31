@@ -27,6 +27,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+protected:
     UPROPERTY(VisibleDefaultsOnly, Category = "Components")
     UStaticMeshComponent* MeshComp;
     
@@ -38,7 +39,11 @@ protected:
 
     UPROPERTY(VisibleDefaultsOnly, Category = "Components")
     UAudioComponent* AudioComp;
-    
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+    USphereComponent* TeammateOverlapSphereComp;
+
+protected:
     FVector GetNextPathPoint();
     
     FVector NextPathPoint;
@@ -60,9 +65,15 @@ protected:
     void SelfDestruct();
 
     UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float DefaultExplosionDamage;
+
+    UPROPERTY(BlueprintReadonly, Category = "TrackerBot")
     float ExplosionDamage;
 
     UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float DefaultExplosionRange;
+
+    UPROPERTY(BlueprintReadonly, Category = "TrackerBot")
     float ExplosionRange;
 
     UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
@@ -87,6 +98,22 @@ protected:
     UFUNCTION()
     void OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
                          const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+protected:
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float MaxPowerValue;
+
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentPowerChanged, BlueprintReadonly, Category = "TrackerBot")
+    float CurrentPowerValue;
+
+    UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+    float EachTeammateGivenPower;
+
+    void ChangeCurrentPower(int TeammateCount);
+
+    UFUNCTION()
+    void OnRep_CurrentPowerChanged();
 
 public:	
 	// Called every frame

@@ -36,6 +36,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadwrite, Category = "Health")
     float DefaultHealth;
+
+    float GetCurrentHealth();
     
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnHealthChangedSignature OnHealthChanged;

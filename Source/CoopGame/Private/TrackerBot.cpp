@@ -17,12 +17,15 @@
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "UnrealNetwork.h"
 
 // Sets default values
 ATrackerBot::ATrackerBot()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+    Tags.Add(FName("TrackerBot"));
 
     MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
     MeshComp->SetCanEverAffectNavigation(false);
@@ -40,18 +43,29 @@ ATrackerBot::ATrackerBot()
     SphereComp->SetupAttachment(RootComponent);
 
     AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+
+    TeammateOverlapSphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("TeammateSphereOverlapComp"));
+    TeammateOverlapSphereComp->SetSphereRadius(300.0f);
+    TeammateOverlapSphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    TeammateOverlapSphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+    TeammateOverlapSphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    TeammateOverlapSphereComp->SetupAttachment(RootComponent);
     
     bUseVelocityChagne = true;
     ReachRequiredDistance = 100.0f;
     MovementForce = 1000.0f;
 
     bExplosion = false;
-    ExplosionDamage = 40.0f;
-    ExplosionRange = 200.0f;
+    DefaultExplosionDamage = 40.0f;
+    DefaultExplosionRange = 200.0f;
 
     bStartSelfDamage = false;
 
     SelfDamageInterval = 0.5f;
+
+    MaxPowerValue = 100.0f;
+    EachTeammateGivenPower = 20.0f;
+    CurrentPowerValue = 0.0f;
 }
 
 // Called when the game starts or when spawned
@@ -63,6 +77,9 @@ void ATrackerBot::BeginPlay()
     {
         NextPathPoint = GetNextPathPoint();
     }
+
+    ExplosionRange = DefaultExplosionRange;
+    ExplosionDamage = DefaultExplosionDamage;
 
     HealthComp->OnHealthChanged.AddDynamic(this, &ATrackerBot::OnHealthChanged);
 }
@@ -80,6 +97,32 @@ FVector ATrackerBot::GetNextPathPoint()
     }
     
     return GetActorLocation();
+}
+
+void ATrackerBot::ChangeCurrentPower(int TeammateCount)
+{
+    if (CurrentPowerValue == TeammateCount * EachTeammateGivenPower)
+        return;
+
+    CurrentPowerValue = TeammateCount * EachTeammateGivenPower;
+
+    OnRep_CurrentPowerChanged();
+}
+
+void ATrackerBot::OnRep_CurrentPowerChanged()
+{
+    ExplosionRange = DefaultExplosionRange + (CurrentPowerValue / MaxPowerValue) * 200.0f;
+    ExplosionDamage = DefaultExplosionDamage + (CurrentPowerValue / MaxPowerValue) * 40.0f;
+
+    if (!MatInstance)
+    {
+        MatInstance = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
+    }
+
+    if (MatInstance)
+    {
+        MatInstance->SetScalarParameterValue("PowerLevelAlpha", CurrentPowerValue / MaxPowerValue);
+    }
 }
 
 // Called every frame
@@ -105,6 +148,22 @@ void ATrackerBot::Tick(float DeltaTime)
             ForceDirection *= MovementForce;
             MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChagne);
         }
+
+         TArray<UPrimitiveComponent*> OverlappingComps;
+         TeammateOverlapSphereComp->GetOverlappingComponents(OverlappingComps);
+         auto nearByTeammateCount = 0;
+         for (auto i = 0; i < OverlappingComps.Num(); i++)
+         {
+             auto PrimCop = OverlappingComps[i];
+        
+             if (PrimCop && PrimCop->GetOwner() != this
+                 && PrimCop->GetOwner()->ActorHasTag(FName("TrackerBot")))
+             {
+                 nearByTeammateCount++;
+             }
+         }
+        
+         ChangeCurrentPower(nearByTeammateCount);
     }
     
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
@@ -116,6 +175,8 @@ void ATrackerBot::Tick(float DeltaTime)
 
 void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+    DrawDebugString(GetWorld(), GetActorLocation(), FString("NotifyActorBeginOverlap"), 0, FColor::Red, 2);
+
     if (!bStartSelfDamage && !bExplosion)
     {
         bStartSelfDamage = true;
@@ -123,6 +184,8 @@ void ATrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
         const auto PlayerPawn = Cast<ASCharacter>(OtherActor);
         if (PlayerPawn)
         {
+            DrawDebugString(GetWorld(), GetActorLocation(), FString("overlap PlayerPawn"), 0, FColor::Red, 2);
+
             GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ATrackerBot::SelfDamage, SelfDamageInterval, true, 0);
 
             if (SelfDestructSoundEffect)
@@ -169,6 +232,8 @@ void ATrackerBot::SelfDestruct()
 void ATrackerBot::SelfDamage()
 {
     UGameplayStatics::ApplyDamage(this, 20.0f, GetInstigatorController(), this, nullptr);
+
+    DrawDebugString(GetWorld(), GetActorLocation(), FString::SanitizeFloat(HealthComp->GetCurrentHealth()), 0, FColor::Red, 2);
 }
 
 void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, float HealthDelta,
@@ -181,7 +246,7 @@ void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, fl
     
     if (MatInstance)
     {
-        MatInstance->SetScalarParameterValue("LastTimeTakeDamaged", GetWorld()->TimeSeconds);
+        MatInstance->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
     }
     
     UE_LOG(LogTemp, Log, TEXT("Health Changed: %s (%s)"), *FString::SanitizeFloat(Health), *GetName());
@@ -190,4 +255,12 @@ void ATrackerBot::OnHealthChanged(USHealthComponent* HealthCom, float Health, fl
     {
         SelfDestruct();
     }
+}
+
+
+void ATrackerBot::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ATrackerBot, CurrentPowerValue);
 }
