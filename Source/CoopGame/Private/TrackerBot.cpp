@@ -67,6 +67,8 @@ ATrackerBot::ATrackerBot()
     MaxPowerValue = 100.0f;
     EachTeammateGivenPower = 20.0f;
     CurrentPowerValue = 0.0f;
+
+    ChangePowerTimer = 1.0f;
 }
 
 // Called when the game starts or when spawned
@@ -152,21 +154,29 @@ void ATrackerBot::Tick(float DeltaTime)
             MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChagne);
         }
 
-        TArray<UPrimitiveComponent*> OverlappingComps;
-        TeammateOverlapSphereComp->GetOverlappingComponents(OverlappingComps);
-        auto nearByTeammateCount = 0;
-        for (auto i = 0; i < OverlappingComps.Num(); i++)
+        // 1s ´¥·¢Ò»´Î
+        ChangePowerTimer += DeltaTime;
+        if (ChangePowerTimer >= 1.0f)
         {
-            auto PrimCop = OverlappingComps[i];
-            
-            if (PrimCop && PrimCop->GetOwner() != this
-                && PrimCop->GetOwner()->ActorHasTag(FName("TrackerBot")))
+            ChangePowerTimer = 0.0f;
+
+            TArray<UPrimitiveComponent*> OverlappingComps;
+            TeammateOverlapSphereComp->GetOverlappingComponents(OverlappingComps);
+            auto nearByTeammateCount = 0;
+            for (auto i = 0; i < OverlappingComps.Num(); i++)
             {
-                nearByTeammateCount++;
+                const auto PrimCop = OverlappingComps[i];
+
+                if (PrimCop && PrimCop->GetOwner() != this
+                    && PrimCop->GetOwner()->ActorHasTag(FName("TrackerBot")))
+                {
+                    nearByTeammateCount++;
+                }
             }
-         }
-        
-         ChangeCurrentPower(nearByTeammateCount);
+
+            UE_LOG(LogTemp, Log, TEXT("ChangeCurrentPower (%s, %s)"), *FString::SanitizeFloat(GetWorld()->GetTimeSeconds()), *FString::FromInt(nearByTeammateCount));
+            ChangeCurrentPower(nearByTeammateCount);
+        }
     }
     
     DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);

@@ -119,6 +119,8 @@ protected:
     UFUNCTION()
     void OnRep_CurrentPowerChanged();
 
+    float ChangePowerTimer;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
