@@ -56,6 +56,18 @@ float USHealthComponent::GetCurrentHealth()
     return Health;
 }
 
+void USHealthComponent::Heal(float HealCount)
+{
+    if (HealCount <= 0.0f || Health <= 0.0f)
+        return;
+
+    Health = FMath::Clamp(Health + HealCount, 0.0f, DefaultHealth);
+
+    UE_LOG(LogTemp, Log, TEXT("%s Current Health: %s (+%s)"), *GetOwner()->GetName(), *FString::SanitizeFloat(Health), *FString::SanitizeFloat(HealCount));
+
+    OnHealthChanged.Broadcast(this, Health, -HealCount, nullptr, nullptr, nullptr);
+}
+
 void USHealthComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
