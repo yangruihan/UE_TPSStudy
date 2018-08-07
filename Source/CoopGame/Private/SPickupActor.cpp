@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "Public/SPowerupActor.h"
 #include "TimerManager.h"
+#include "SCharacter.h"
 
 // Sets default values
 ASPickupActor::ASPickupActor()
@@ -47,6 +48,10 @@ void ASPickupActor::NotifyActorBeginOverlap(AActor* OtherActor)
     Super::NotifyActorBeginOverlap(OtherActor);
 
     if (PowerupInstance == nullptr)
+        return;
+
+    const auto Player = Cast<ASCharacter>(OtherActor);
+    if (Player == nullptr)
         return;
 
     PowerupInstance->Active();

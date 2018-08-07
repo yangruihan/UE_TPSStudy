@@ -38,7 +38,7 @@ void ASPowerupActor::Active()
 
     if (TickTimes > 0)
     {
-        GetWorld()->GetTimerManager().SetTimer(TimerHandle_PowerupTick, this, &ASPowerupActor::PowerupTick, TickInterval, true, TickInterval);
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle_PowerupTick, this, &ASPowerupActor::PowerupTick, TickInterval, true);
     }
     else
     {
